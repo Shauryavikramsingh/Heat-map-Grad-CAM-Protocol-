@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedRadio | Grad-CAM Heatmap Protocol</title>
+    <style>
+        :root {
+            --medical-blue: #00f2ff;
+            --danger-red: #ff3c3c;
+            --deep-space: #05070a;
+            --glass: rgba(255, 255, 255, 0.05);
+        }
+
+        body {
+            background: var(--deep-space);
+            color: #d1d5db;
+            font-family: 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 40px;
+        }
+
+        .container { max-width: 900px; margin: auto; }
+
+        .glass-card {
+            background: var(--glass);
+            border: 1px solid rgba(0, 242, 255, 0.2);
+            border-radius: 20px;
+            padding: 40px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        h1 { color: var(--medical-blue); font-size: 2.5rem; text-transform: uppercase; letter-spacing: 2px; }
+        .badge { background: var(--medical-blue); color: black; padding: 4px 12px; border-radius: 5px; font-weight: bold; font-size: 0.8rem; }
+
+        .visual-demo {
+            display: flex;
+            gap: 20px;
+            margin: 30px 0;
+            background: #000;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #333;
+        }
+
+        .demo-box { flex: 1; text-align: center; }
+        .demo-label { font-size: 0.7rem; color: #888; text-transform: uppercase; margin-bottom: 5px; }
+
+        .theory-section { margin-top: 40px; }
+        .theory-section h2 { color: var(--medical-blue); border-bottom: 1px solid #333; padding-bottom: 10px; }
+
+        pre {
+            background: #000;
+            padding: 20px;
+            border-radius: 10px;
+            color: #9cdcfe;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            border-left: 4px solid var(--medical-blue);
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 40px; right: 40px;
+            background: var(--medical-blue);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .logic-step {
+            margin: 15px 0;
+            padding-left: 20px;
+            border-left: 2px solid #444;
+        }
+
+        .logic-step strong { color: var(--medical-blue); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="glass-card">
+        <button class="copy-btn" onclick="copyCode()">COPY PROTOCOL</button>
+        <span class="badge">Explainable AI (XAI)</span>
+        <h1>Grad-CAM Protocol</h1>
+        <p>Turning "Black-Box" Predictions into Visual Medical Evidence.</p>
+
+        
+
+        <div class="theory-section">
+            <h2>The "Why" Behind the Code</h2>
+            <p>In medical diagnostics, knowing <strong>"What"</strong> the AI predicted isn't enough. We must know <strong>"Where"</strong> the AI looked. Most students use simple predictions; we implement <strong>Gradient-weighted Class Activation Mapping</strong>.</p>
+            
+            <div class="logic-step">
+                <strong>1. Gradient Tracking:</strong> We use <code>tf.GradientTape()</code> to monitor the "Pneumonia" score as it flows through the neural network.
+            </div>
+            <div class="logic-step">
+                <strong>2. Feature Importance:</strong> We look at the <em>Last Convolutional Layer</em>. This layer contains the most complex spatial patterns (like lung textures).
+            </div>
+            <div class="logic-step">
+                <strong>3. Pixel Activation:</strong> By calculating the gradient of the score with respect to these features, we find exactly which pixels "pushed" the AI toward its decision.
+            </div>
+        </div>
+
+        <h3>The Lethal Code</h3>
+        <pre id="protocol-code">
+import tensorflow as tf
+import numpy as np
+
+def generate_medical_heatmap(model, img_array, layer_name):
+    # 1. Map input to the specific feature layer
+    grad_model = tf.keras.models.Model(
+        [model.inputs], [model.get_layer(layer_name).output, model.output]
+    )
+
+    # 2. Record the gradients of the top predicted class
+    with tf.GradientTape() as tape:
+        conv_outputs, predictions = grad_model(img_array)
+        class_idx = np.argmax(predictions[0])
+        loss = predictions[:, class_idx]
+
+    # 3. Compute the weights of each feature map
+    output = conv_outputs[0]
+    grads = tape.gradient(loss, conv_outputs)[0]
+    weights = tf.reduce_mean(grads, axis=(0, 1))
+
+    # 4. Create the heatmap (weighted average)
+    heatmap = output @ weights[..., tf.newaxis]
+    heatmap = tf.squeeze(heatmap)
+    return heatmap.numpy()</pre>
+    </div>
+</div>
+
+<script>
+    function copyCode() {
+        const code = document.getElementById('protocol-code').innerText;
+        navigator.clipboard.writeText(code);
+        alert("Grad-CAM Protocol Copied to Clipboard!");
+    }
+</script>
+
+</body>
+</html>
